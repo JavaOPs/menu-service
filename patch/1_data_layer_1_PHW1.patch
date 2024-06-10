@@ -1,0 +1,51 @@
+Subject: [PATCH] 1_data_layer_1_PHW1
+---
+Index: src/main/java/ru/javaops/cloudjava/menuservice/exception/MenuServiceException.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/exception/MenuServiceException.java b/src/main/java/ru/javaops/cloudjava/menuservice/exception/MenuServiceException.java
+new file mode 100644
+--- /dev/null	(date 1715634487922)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/exception/MenuServiceException.java	(date 1715634487922)
+@@ -0,0 +1,16 @@
++package ru.javaops.cloudjava.menuservice.exception;
++
++import lombok.Getter;
++import org.springframework.http.HttpStatus;
++
++@Getter
++public class MenuServiceException extends RuntimeException {
++
++    private final HttpStatus status;
++
++    public MenuServiceException(String message, HttpStatus status) {
++        super(message);
++        this.status = status;
++    }
++
++}
+Index: src/main/resources/db/migration/V1__menu_initial_schema.sql
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/resources/db/migration/V1__menu_initial_schema.sql b/src/main/resources/db/migration/V1__menu_initial_schema.sql
+new file mode 100644
+--- /dev/null	(date 1715634487926)
++++ b/src/main/resources/db/migration/V1__menu_initial_schema.sql	(date 1715634487926)
+@@ -0,0 +1,13 @@
++CREATE TABLE menu_items(
++    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
++    name TEXT UNIQUE NOT NULL,
++    description TEXT NOT NULL,
++    price NUMERIC(6,2),
++    category TEXT NOT NULL,
++    time_to_cook BIGINT NOT NULL,
++    weight FLOAT NOT NULL,
++    image_url TEXT NOT NULL,
++    ingredient_collection JSONB NOT NULL,
++    created_at TIMESTAMP NOT NULL,
++    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
++);

@@ -1,0 +1,236 @@
+Subject: [PATCH] 1_data_layer_5_HWD2
+---
+Index: src/test/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepositoryImplTest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/test/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepositoryImplTest.java b/src/test/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepositoryImplTest.java
+--- a/src/test/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepositoryImplTest.java	(revision 6d7c6d999d45458cc58fd3452ce5bf0dc2518ef4)
++++ b/src/test/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepositoryImplTest.java	(date 1717009138968)
+@@ -6,23 +6,27 @@
+ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+ import org.springframework.context.annotation.Import;
++import org.springframework.dao.DataIntegrityViolationException;
+ import org.springframework.test.context.ActiveProfiles;
+ import org.springframework.test.context.jdbc.Sql;
+ import org.springframework.test.context.jdbc.SqlGroup;
+ import org.springframework.transaction.annotation.Propagation;
+ import org.springframework.transaction.annotation.Transactional;
+ import ru.javaops.cloudjava.menuservice.dto.SortBy;
++import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+ import ru.javaops.cloudjava.menuservice.storage.model.Category;
+ import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
+ import ru.javaops.cloudjava.menuservice.storage.repositories.updaters.MenuAttrUpdaters;
+ import ru.javaops.cloudjava.menuservice.testutils.TestData;
+ 
+ import java.lang.reflect.Field;
++import java.math.BigDecimal;
+ import java.util.Arrays;
+ import java.util.List;
+ import java.util.function.Function;
+ 
+ import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
++import static org.junit.Assert.assertThrows;
+ 
+ @DataJpaTest
+ @Import(MenuAttrUpdaters.class)
+@@ -57,17 +61,36 @@
+ 
+     @Test
+     void updateMenu_updatesMenu_whenSomeUpdateFieldsAreSet() {
+-        // TODO
++        var dto = UpdateMenuRequest.builder()
++                .price(BigDecimal.valueOf(100.01))
++                .description("New Cappuccino Description")
++                .imageUrl("http://images.com/new_cappuccino.png")
++                .build();
++        var id = getIdByName("Cappuccino");
++        int updateCount = menuItemRepository.updateMenu(id, dto);
++        assertThat(updateCount).isEqualTo(1);
++        MenuItem updated = menuItemRepository.findById(id).get();
++        assertFieldsEquality(updated, dto, "price", "description", "imageUrl");
+     }
+ 
+     @Test
+     void updateMenu_throws_whenUpdateRequestHasNotUniqueName() {
+-        // TODO
++        var dto = UpdateMenuRequest.builder()
++                .name("Wine")
++                .price(BigDecimal.valueOf(100.01))
++                .description("New Cappuccino Description")
++                .imageUrl("http://images.com/new_cappuccino.png")
++                .build();
++        var id = getIdByName("Cappuccino");
++        assertThrows(DataIntegrityViolationException.class,
++                () -> menuItemRepository.updateMenu(id, dto));
+     }
+ 
+     @Test
+     void updateMenu_updatesNothing_whenNoMenuPresentInDB() {
+-        // TODO
++        var dto = TestData.updateMenuFullRequest();
++        int updateCount = menuItemRepository.updateMenu(1000L, dto);
++        assertThat(updateCount).isEqualTo(0);
+     }
+ 
+     @Test
+@@ -79,27 +102,37 @@
+ 
+     @Test
+     void getMenusFor_returnsCorrectListForDRINKS_sortedByPriceDesc() {
+-        // TODO
++        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.PRICE_DESC);
++        assertThat(drinks).hasSize(3);
++        assertElementsInOrder(drinks, MenuItem::getName, List.of("Tea", "Wine", "Cappuccino"));
+     }
+ 
+     @Test
+     void getMenusFor_returnsCorrectListForDRINKS_sortedByNameAsc() {
+-        // TODO
++        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.AZ);
++        assertThat(drinks).hasSize(3);
++        assertElementsInOrder(drinks, MenuItem::getName, List.of("Cappuccino", "Tea", "Wine"));
+     }
+ 
+     @Test
+     void getMenusFor_returnsCorrectListForDRINKS_sortedByNameDesc() {
+-        // TODO
++        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.ZA);
++        assertThat(drinks).hasSize(3);
++        assertElementsInOrder(drinks, MenuItem::getName, List.of("Wine", "Tea", "Cappuccino"));
+     }
+ 
+     @Test
+     void getMenusFor_returnsCorrectListForDRINKS_sortedByDateAsc() {
+-        // TODO
++        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_ASC);
++        assertThat(drinks).hasSize(3);
++        assertElementsInOrder(drinks, MenuItem::getName, List.of("Cappuccino", "Wine", "Tea"));
+     }
+ 
+     @Test
+     void getMenusFor_returnsCorrectListForDRINKS_sortedByDateDesc() {
+-        // TODO
++        var drinks = menuItemRepository.getMenusFor(Category.DRINKS, SortBy.DATE_DESC);
++        assertThat(drinks).hasSize(3);
++        assertElementsInOrder(drinks, MenuItem::getName, List.of("Tea", "Wine", "Cappuccino"));
+     }
+ 
+     private Long getIdByName(String name) {
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java
+--- a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java	(revision 6d7c6d999d45458cc58fd3452ce5bf0dc2518ef4)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java	(date 1717009145768)
+@@ -2,6 +2,8 @@
+ 
+ import org.springframework.context.annotation.Bean;
+ import org.springframework.context.annotation.Configuration;
++import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem_;
+ 
+ import java.math.BigDecimal;
+ 
+@@ -9,26 +11,26 @@
+ public class MenuAttrUpdaters {
+     @Bean
+     MenuAttrUpdater<String> description() {
+-        return null;
++        return new MenuAttrUpdater<>(MenuItem_.description, UpdateMenuRequest::getDescription);
+     }
+ 
+     @Bean
+     MenuAttrUpdater<String> imageUrl() {
+-        return null;
++        return new MenuAttrUpdater<>(MenuItem_.imageUrl, UpdateMenuRequest::getImageUrl);
+     }
+ 
+     @Bean
+     MenuAttrUpdater<String> name() {
+-        return null;
++        return new MenuAttrUpdater<>(MenuItem_.name, UpdateMenuRequest::getName);
+     }
+ 
+     @Bean
+     MenuAttrUpdater<BigDecimal> price() {
+-        return null;
++        return new MenuAttrUpdater<>(MenuItem_.price, UpdateMenuRequest::getPrice);
+     }
+ 
+     @Bean
+     MenuAttrUpdater<Long> timeToCook() {
+-        return null;
++        return new MenuAttrUpdater<>(MenuItem_.timeToCook, UpdateMenuRequest::getTimeToCook);
+     }
+ }
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java
+--- a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java	(revision 6d7c6d999d45458cc58fd3452ce5bf0dc2518ef4)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java	(date 1717009145763)
+@@ -1,13 +1,22 @@
+ package ru.javaops.cloudjava.menuservice.storage.repositories.updaters;
+ 
+ import jakarta.persistence.criteria.CriteriaUpdate;
++import jakarta.persistence.metamodel.SingularAttribute;
+ import lombok.AllArgsConstructor;
+ import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
+ import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
+ 
++import java.util.function.Function;
++
+ @AllArgsConstructor
+ public class MenuAttrUpdater<V> {
++    SingularAttribute<MenuItem, V> attr;
++    Function<UpdateMenuRequest, V> dtoValueExtractor;
++
+     public void updateAttr(CriteriaUpdate<MenuItem> criteria, UpdateMenuRequest dto) {
+-        //  TODO  criteria.set(attr, dtoValue);
++        V dtoValue = dtoValueExtractor.apply(dto);
++        if (dtoValue != null) {
++            criteria.set(attr, dtoValue);
++        }
+     }
+ }
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java
+--- a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java	(revision 6d7c6d999d45458cc58fd3452ce5bf0dc2518ef4)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java	(date 1717009145774)
+@@ -1,7 +1,9 @@
+ package ru.javaops.cloudjava.menuservice.storage.repositories;
+ 
+ import jakarta.persistence.EntityManager;
++import jakarta.persistence.TypedQuery;
+ import jakarta.persistence.criteria.CriteriaBuilder;
++import jakarta.persistence.criteria.CriteriaQuery;
+ import jakarta.persistence.criteria.CriteriaUpdate;
+ import jakarta.persistence.criteria.Root;
+ import org.springframework.stereotype.Repository;
+@@ -39,7 +41,13 @@
+ 
+     @Override
+     public List<MenuItem> getMenusFor(Category category, SortBy sortBy) {
+-        // TODO
+-        return null;
++        CriteriaBuilder cb = em.getCriteriaBuilder();
++        CriteriaQuery<MenuItem> query = cb.createQuery(MenuItem.class);
++        Root<MenuItem> root = query.from(MenuItem.class);
++        query.orderBy(sortBy.getOrder(cb, root));
++        query.where(cb.equal(root.get(MenuItem_.category), category));
++        CriteriaQuery<MenuItem> select = query.select(root);
++        TypedQuery<MenuItem> typedQuery = em.createQuery(select);
++        return typedQuery.getResultList();
+     }
+ }

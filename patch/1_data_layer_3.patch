@@ -1,0 +1,272 @@
+Subject: [PATCH] 1_data_layer_3
+---
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepository.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepository.java
+new file mode 100644
+--- /dev/null	(date 1716292267051)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/MenuItemRepository.java	(date 1716292267051)
+@@ -0,0 +1,9 @@
++package ru.javaops.cloudjava.menuservice.storage.repositories;
++
++import org.springframework.data.jpa.repository.JpaRepository;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
++
++
++public interface MenuItemRepository extends JpaRepository<MenuItem, Long>, CustomMenuItemRepository {
++
++}
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java
+new file mode 100644
+--- /dev/null	(date 1716377316202)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdaters.java	(date 1716377316202)
+@@ -0,0 +1,34 @@
++package ru.javaops.cloudjava.menuservice.storage.repositories.updaters;
++
++import org.springframework.context.annotation.Bean;
++import org.springframework.context.annotation.Configuration;
++
++import java.math.BigDecimal;
++
++@Configuration
++public class MenuAttrUpdaters {
++    @Bean
++    MenuAttrUpdater<String> description() {
++        return null;
++    }
++
++    @Bean
++    MenuAttrUpdater<String> imageUrl() {
++        return null;
++    }
++
++    @Bean
++    MenuAttrUpdater<String> name() {
++        return null;
++    }
++
++    @Bean
++    MenuAttrUpdater<BigDecimal> price() {
++        return null;
++    }
++
++    @Bean
++    MenuAttrUpdater<Long> timeToCook() {
++        return null;
++    }
++}
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java
+new file mode 100644
+--- /dev/null	(date 1716377172492)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/updaters/MenuAttrUpdater.java	(date 1716377172492)
+@@ -0,0 +1,13 @@
++package ru.javaops.cloudjava.menuservice.storage.repositories.updaters;
++
++import jakarta.persistence.criteria.CriteriaUpdate;
++import lombok.AllArgsConstructor;
++import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
++
++@AllArgsConstructor
++public class MenuAttrUpdater<V> {
++    public void updateAttr(CriteriaUpdate<MenuItem> criteria, UpdateMenuRequest dto) {
++        //  TODO  criteria.set(attr, dtoValue);
++    }
++}
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java
+new file mode 100644
+--- /dev/null	(date 1716377172479)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepositoryImpl.java	(date 1716377172479)
+@@ -0,0 +1,45 @@
++package ru.javaops.cloudjava.menuservice.storage.repositories;
++
++import jakarta.persistence.EntityManager;
++import jakarta.persistence.criteria.CriteriaBuilder;
++import jakarta.persistence.criteria.CriteriaUpdate;
++import jakarta.persistence.criteria.Root;
++import org.springframework.stereotype.Repository;
++import org.springframework.transaction.annotation.Transactional;
++import ru.javaops.cloudjava.menuservice.dto.SortBy;
++import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
++import ru.javaops.cloudjava.menuservice.storage.model.Category;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem_;
++import ru.javaops.cloudjava.menuservice.storage.repositories.updaters.MenuAttrUpdater;
++
++import java.util.List;
++
++@Repository
++public class CustomMenuItemRepositoryImpl implements CustomMenuItemRepository {
++
++    private final EntityManager em;
++    private final List<MenuAttrUpdater<?>> updaters;
++
++    public CustomMenuItemRepositoryImpl(EntityManager em, List<MenuAttrUpdater<?>> updaters) {
++        this.em = em;
++        this.updaters = updaters;
++    }
++
++    @Transactional
++    @Override
++    public int updateMenu(Long id, UpdateMenuRequest dto) {
++        CriteriaBuilder cb = em.getCriteriaBuilder();
++        CriteriaUpdate<MenuItem> сriteriaUpdate = cb.createCriteriaUpdate(MenuItem.class);
++        Root<MenuItem> root = сriteriaUpdate.from(MenuItem.class);
++        updaters.forEach(updater -> updater.updateAttr(сriteriaUpdate, dto));
++        сriteriaUpdate.where(cb.equal(root.get(MenuItem_.id), id));
++        return em.createQuery(сriteriaUpdate).executeUpdate();
++    }
++
++    @Override
++    public List<MenuItem> getMenusFor(Category category, SortBy sortBy) {
++        // TODO
++        return null;
++    }
++}
+Index: src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepository.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepository.java b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepository.java
+new file mode 100644
+--- /dev/null	(date 1716375447089)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/storage/repositories/CustomMenuItemRepository.java	(date 1716375447089)
+@@ -0,0 +1,15 @@
++package ru.javaops.cloudjava.menuservice.storage.repositories;
++
++import ru.javaops.cloudjava.menuservice.dto.SortBy;
++import ru.javaops.cloudjava.menuservice.dto.UpdateMenuRequest;
++import ru.javaops.cloudjava.menuservice.storage.model.Category;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
++
++import java.util.List;
++
++public interface CustomMenuItemRepository {
++
++    int updateMenu(Long id, UpdateMenuRequest dto);
++
++    List<MenuItem> getMenusFor(Category category, SortBy sortBy);
++}
+Index: src/main/java/ru/javaops/cloudjava/menuservice/dto/UpdateMenuRequest.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/dto/UpdateMenuRequest.java b/src/main/java/ru/javaops/cloudjava/menuservice/dto/UpdateMenuRequest.java
+new file mode 100644
+--- /dev/null	(date 1716292267028)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/dto/UpdateMenuRequest.java	(date 1716292267028)
+@@ -0,0 +1,23 @@
++package ru.javaops.cloudjava.menuservice.dto;
++
++import com.fasterxml.jackson.annotation.JsonInclude;
++import lombok.AllArgsConstructor;
++import lombok.Builder;
++import lombok.Data;
++import lombok.NoArgsConstructor;
++
++import java.math.BigDecimal;
++
++@Data
++@AllArgsConstructor
++@NoArgsConstructor
++@Builder
++@JsonInclude(JsonInclude.Include.NON_NULL)
++public class UpdateMenuRequest {
++    private String name;
++    private String description;
++    private BigDecimal price;
++    private Long timeToCook;
++    private String imageUrl;
++}
++
+Index: src/main/java/ru/javaops/cloudjava/menuservice/dto/SortBy.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/src/main/java/ru/javaops/cloudjava/menuservice/dto/SortBy.java b/src/main/java/ru/javaops/cloudjava/menuservice/dto/SortBy.java
+new file mode 100644
+--- /dev/null	(date 1716292267023)
++++ b/src/main/java/ru/javaops/cloudjava/menuservice/dto/SortBy.java	(date 1716292267023)
+@@ -0,0 +1,61 @@
++package ru.javaops.cloudjava.menuservice.dto;
++
++import com.fasterxml.jackson.annotation.JsonCreator;
++import jakarta.persistence.criteria.CriteriaBuilder;
++import jakarta.persistence.criteria.Order;
++import jakarta.persistence.criteria.Root;
++import org.springframework.http.HttpStatus;
++import ru.javaops.cloudjava.menuservice.exception.MenuServiceException;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem;
++import ru.javaops.cloudjava.menuservice.storage.model.MenuItem_;
++
++public enum SortBy {
++    AZ {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.asc(root.get(MenuItem_.name));
++        }
++    },
++    ZA {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.desc(root.get(MenuItem_.name));
++        }
++    },
++    PRICE_ASC {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.asc(root.get(MenuItem_.price));
++        }
++    },
++    PRICE_DESC {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.desc(root.get(MenuItem_.price));
++        }
++    },
++    DATE_ASC {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.asc(root.get(MenuItem_.createdAt));
++        }
++    },
++    DATE_DESC {
++        @Override
++        public Order getOrder(CriteriaBuilder cb, Root<MenuItem> root) {
++            return cb.desc(root.get(MenuItem_.createdAt));
++        }
++    };
++
++    public abstract Order getOrder(CriteriaBuilder cb, Root<MenuItem> root);
++
++    @JsonCreator
++    public static SortBy fromString(String str) {
++        try {
++            return SortBy.valueOf(str.toUpperCase());
++        } catch (IllegalArgumentException e) {
++            var msg = "Failed to create SortBy from string: %s".formatted(str);
++            throw new MenuServiceException(msg, HttpStatus.BAD_REQUEST);
++        }
++    }
++}
