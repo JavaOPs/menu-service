@@ -1,0 +1,8 @@
+insert into menu_items(name, description, price, category, time_to_cook, weight, image_url, ingredient_collection, created_at)
+values
+    ('Cappuccino', 'Nice Coffee', 10, 'DRINKS', 1000, 100, 'http://images.com/cappuccino.png', '{"ingredients":[{"name":"milk","calories":10},{"name":"water","calories":0},{"name":"coffe beans","calories":100}]}', '2024-02-18 10:23:54'),
+    ('Green Salad', 'Nice Green Salad', 20, 'SALADS', 10000, 1000, 'http://images.com/green-salad.png', '{"ingredients":[{"name":"greens","calories":10},{"name":"cucumber","calories":100},{"name":"tomatoes","calories":1000}]}', '2024-02-18 10:24:54'),
+    ('Wine', 'Nice Wine', 30, 'DRINKS', 10, 750, 'http://images.com/wine.png', '{"ingredients":[{"name":"water","calories":0},{"name":"wine","calories":100}]}', '2024-02-18 10:25:54'),
+    ('Tea', 'Nice Tea', 40, 'DRINKS', 500, 200, 'http://images.com/tea.png', '{"ingredients":[{"name":"black tea","calories":10},{"name":"water","calories":0}]}', '2024-02-18 10:26:54'),
+    ('Hot Dog', 'Nice Hot Dog', 50, 'SNACKS', 300, 300, 'http://images.com/hot-dog.png', '{"ingredients":[{"name":"sausage","calories":200},{"name":"bread","calories":400}]}', '2024-02-18 10:27:54'),
+    ('Georgian Salad', 'Nice Georgian Salad', 60, 'SALADS', 1000, 100, 'http://images.com/georgian-salad.png', '{"ingredients":[{"name":"greens","calories":100},{"name":"cucumber","calories":10},{"name":"sauce","calories":200}]}', '2024-02-18 10:28:54');
