@@ -1,0 +1,56 @@
+server:
+  port: 9091
+  # говорим серверу, чтобы при получении сигнала SIGTERM он более не принимал
+  # новые запросы, но при этом выполнил те, что уже в работе в течение времени,
+  # которое указано в настройке spring.lifecycle.timeout-per-shutdown-phase
+  # по умолчанию 30 секунд
+  # подробнее тут: https://habr.com/en/companies/maxilect/articles/666090/
+  shutdown: graceful
+  tomcat:
+    # говорим Tomcat сколько времени ждать после открытия соединения до получения запроса.
+    # Может быть полезно для защиты от DoS атак, когда клиент устанавливает соединение,
+    # сервер выделяет поток для его обработки, но запрос не приходит.
+    # Это же время Tomcat будет тратить на чтение тела запроса.
+    connection-timeout: 3s
+    # время, в течение которого Tomcat удерживает соединение открытым, ожидая новых запросов
+    keep-alive-timeout: 20s
+    # Tomcat использует пул потоков для обработки входящих соединений: одно соединение - один поток.
+    # По умолчанию макимальное количество потоков в пуле - 200.
+    threads:
+      max: 200
+      # минимальное количество потоков, которые будут созданы в пуле при старте сервера
+      min-spare: 10
+spring:
+  application:
+    name: menu-service
+  lifecycle:
+    timeout-per-shutdown-phase: 30s # время, в течение которого текущие запросы будут отрабатываться после получения сигнала SIGTERM
+  datasource:
+    username: user
+    password: password
+    url: jdbc:postgresql://localhost:5432/menu_service_db
+    hikari:
+      # таймаут на получение соединения из пула соединений
+      connection-timeout: 2000 # в миллисекундах
+      # по умолчанию в приложении используется пул соединений с БД HikariCP.
+      # его размер конфигурируется этой настройкой. Специалисты команды HikariCP рекомендуют
+      # устанавливать количество соединений, исходя из формулы:
+      # connections = ((core_count * 2) + effective_spindle_count)
+      # где core_count - количество ядер процессора
+      # effective_spindle_count - количество вращающихся дисков
+      # Так как мы предполагаем, что будет использоваться SSD, вращающихся дисков не будет,
+      # поэтому effective_spindle_count = 0
+      # Мы также предполагаем, что количество ядер = 6, следовательно maximum-pool-size = 12
+      # более подробно тут: https://github.com/brettwooldridge/HikariCP/wiki/About-Pool-Sizing
+      maximum-pool-size: 12
+  jpa:
+    open-in-view: false
+    hibernate:
+      # говорим hibernate, что необходимо провалидировать соответствие схемы БД и JPA модели
+      ddl-auto: validate
+    properties:
+      hibernate:
+        # говорим hibernate, чтобы выводимые в логи sql запросы были отфрматированы для удобства чтения
+        format_sql: true
+        # говорим hibernate показывать sql запросы в логах (для отладки и тестирования)
+        show_sql: true
