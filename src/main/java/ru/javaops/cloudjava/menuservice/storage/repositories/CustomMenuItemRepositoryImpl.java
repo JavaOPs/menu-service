@@ -1,7 +1,9 @@
 package ru.javaops.cloudjava.menuservice.storage.repositories;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.TypedQuery;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.CriteriaUpdate;
 import jakarta.persistence.criteria.Root;
 import org.springframework.stereotype.Repository;
@@ -39,7 +41,13 @@ public class CustomMenuItemRepositoryImpl implements CustomMenuItemRepository {
 
     @Override
     public List<MenuItem> getMenusFor(Category category, SortBy sortBy) {
-        // TODO
-        return null;
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery<MenuItem> query = cb.createQuery(MenuItem.class);
+        Root<MenuItem> root = query.from(MenuItem.class);
+        query.orderBy(sortBy.getOrder(cb, root));
+        query.where(cb.equal(root.get(MenuItem_.category), category));
+        CriteriaQuery<MenuItem> select = query.select(root);
+        TypedQuery<MenuItem> typedQuery = em.createQuery(select);
+        return typedQuery.getResultList();
     }
 }
